@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAYS TO MONTHS</title>
+
+<style>
+body{
+    background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    font-family:Arial;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
+
+.container{
+    width:95%;
+    max-width:750px;
+    background:rgba(255,255,255,0.05);
+    padding:20px;
+    border-radius:20px;
+    backdrop-filter:blur(15px);
+    box-shadow:0 0 25px rgba(0,255,255,0.2);
+}
+
+h2{text-align:center;}
+
+select, button{
+    width:100%;
+    padding:10px;
+    border-radius:8px;
+    margin-bottom:10px;
+    border:none;
+}
+
+button{
+    background:#ff4d4d;
+    color:white;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{transform:scale(1.05);}
+
+.toggle-mode{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:10px;
+}
+
+.toggle-mode button{
+    width:48%;
+    background:#333;
+}
+
+.active-mode{
+    background:#00ffcc !important;
+    color:black !important;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    transition:0.4s ease;
+}
+
+.fade-out{
+    opacity:0;
+    transform:translateY(10px);
+}
+
+.fade-in{
+    opacity:1;
+    transform:translateY(0px);
+}
+
+th, td{
+    padding:10px;
+    text-align:center;
+    border-radius:8px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+th{background:rgba(255,255,255,0.1);}
+td{background:rgba(255,255,255,0.05);}
+
+td:hover{transform:scale(1.08);}
+
+.normal{background:#00bcd4 !important;}
+.double{background:#ff9800 !important;color:black;}
+
+.pop{
+    animation:popAnim 0.2s ease;
+}
+
+@keyframes popAnim{
+    0%{transform:scale(0.8);}
+    100%{transform:scale(1);}
+}
+
+.stats{
+    margin-top:15px;
+    padding:15px;
+    background:black;
+    border-radius:12px;
+    text-align:center;
+    font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>✨ DAYS TO MONTHS ✨</h2>
+
+<select id="monthSelect"></select>
+
+<div class="toggle-mode">
+    <button id="normalBtn" class="active-mode">Normal (200)</button>
+    <button id="doubleBtn">Double (400)</button>
+</div>
+
+<button onclick="resetMonth()">Reset This Month</button>
+
+<table id="calendarTable">
+<thead>
+<tr>
+<th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th>
+<th>Thu</th><th>Fri</th><th>Sat</th>
+</tr>
+</thead>
+<tbody id="calendarBody"></tbody>
+</table>
+
+<div class="stats">
+Total Value: ₹ <span id="total">0</span><br>
+📅 Total Days: <span id="days">0</span>
+</div>
+
+</div>
+
+<script>
+const normalValue = 200;
+const doubleValue = 400;
+let currentMode = "normal";
+
+const monthSelect = document.getElementById("monthSelect");
+const calendarBody = document.getElementById("calendarBody");
+const calendarTable = document.getElementById("calendarTable");
+
+const months = [
+"January","February","March","April","May","June",
+"July","August","September","October","November","December"
+];
+
+months.forEach((m,i)=>{
+    let option = document.createElement("option");
+    option.value = i;
+    option.text = m;
+    monthSelect.appendChild(option);
+});
+
+normalBtn.onclick = ()=>{
+    currentMode="normal";
+    normalBtn.classList.add("active-mode");
+    doubleBtn.classList.remove("active-mode");
+};
+
+doubleBtn.onclick = ()=>{
+    currentMode="double";
+    doubleBtn.classList.add("active-mode");
+    normalBtn.classList.remove("active-mode");
+};
+
+function getStorageKey(){
+    return "gateProUltimate_" + monthSelect.value;
+}
+
+function daysInMonth(month, year){
+    return new Date(year, month+1, 0).getDate();
+}
+
+function calculateStats(savedData,totalDays){
+    let total=0;
+    let selectedDays=0;
+
+    for(let d=1; d<=totalDays; d++){
+        if(savedData[d]){
+            total+=savedData[d];
+            selectedDays++;
+        }
+    }
+
+    totalElement.innerText=total;
+    document.getElementById("days").innerText=selectedDays;
+}
+
+const totalElement=document.getElementById("total");
+
+function loadCalendar(){
+    calendarTable.classList.add("fade-out");
+
+    setTimeout(()=>{
+        calendarBody.innerHTML="";
+        const year=new Date().getFullYear();
+        const month=parseInt(monthSelect.value);
+        const totalDays=daysInMonth(month,year);
+        const firstDay=new Date(year,month,1).getDay();
+
+        let savedData=JSON.parse(localStorage.getItem(getStorageKey()))||{};
+        let date=1;
+
+        for(let row=0;row<6;row++){
+            let tr=document.createElement("tr");
+
+            for(let col=0;col<7;col++){
+                let td=document.createElement("td");
+
+                if(row===0 && col<firstDay){
+                    td.innerHTML="";
+                }
+                else if(date<=totalDays){
+
+                    let currentDate=date;
+                    td.innerText=currentDate;
+
+                    if(savedData[currentDate]){
+                        td.classList.add(savedData[currentDate]==200?"normal":"double");
+                    }
+
+                    td.addEventListener("click",function(){
+                        td.classList.add("pop");
+                        setTimeout(()=>td.classList.remove("pop"),200);
+
+                        if(savedData[currentDate]){
+                            delete savedData[currentDate];
+                            td.classList.remove("normal","double");
+                        } else {
+                            let value=currentMode==="normal"?normalValue:doubleValue;
+                            savedData[currentDate]=value;
+                            td.classList.add(value==200?"normal":"double");
+                        }
+
+                        localStorage.setItem(getStorageKey(),JSON.stringify(savedData));
+                        calculateStats(savedData,totalDays);
+                    });
+
+                    date++;
+                }
+
+                tr.appendChild(td);
+            }
+
+            calendarBody.appendChild(tr);
+        }
+
+        calculateStats(savedData,totalDays);
+
+        calendarTable.classList.remove("fade-out");
+        calendarTable.classList.add("fade-in");
+
+    },200);
+}
+
+function resetMonth(){
+    if(confirm("Reset this month?")){
+        localStorage.removeItem(getStorageKey());
+        loadCalendar();
+    }
+}
+
+monthSelect.addEventListener("change",loadCalendar);
+
+loadCalendar();
+</script>
+
+</body>
+</html>
